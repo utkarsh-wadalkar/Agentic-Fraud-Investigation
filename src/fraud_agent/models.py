@@ -76,7 +76,7 @@ class CaseRecord(BaseModel):
     graph_case_id: str
 
     @model_validator(mode="after")
-    def validate_case_invariants(self) -> "CaseRecord":
+    def validate_case_invariants(self) -> CaseRecord:
         if self.verdict == "legitimate":
             if self.affected_txn_ids or self.exposure_usd != 0:
                 raise ValueError("legitimate case must have no affected transactions or exposure")
@@ -98,7 +98,7 @@ class SarRecord(BaseModel):
     activity_dates: list[str]
 
     @model_validator(mode="after")
-    def validate_sar_shape(self) -> "SarRecord":
+    def validate_sar_shape(self) -> SarRecord:
         if self.file:
             if not self.narrative.strip() or not self.subjects or len(self.activity_dates) != 2:
                 raise ValueError("filed SAR requires narrative, subjects, and two activity dates")
@@ -119,13 +119,15 @@ class InvestigationAnswer(BaseModel):
     latency_s: float = Field(ge=0)
 
     @model_validator(mode="after")
-    def validate_answer_invariants(self) -> "InvestigationAnswer":
+    def validate_answer_invariants(self) -> InvestigationAnswer:
         final_names = {item.action for item in self.next_best_actions.final}
         if self.sar.file != ("FILE_REPORT" in final_names):
             raise ValueError("sar.file must agree with final FILE_REPORT action")
         if not self.evidence_requests:
             if self.next_best_actions.initial != self.next_best_actions.final:
-                raise ValueError("initial and final actions must match when no evidence was requested")
+                raise ValueError(
+                    "initial and final actions must match when no evidence was requested"
+                )
             if self.next_best_actions.what_changed != "nothing":
                 raise ValueError("what_changed must be 'nothing' when no evidence was requested")
         return self
