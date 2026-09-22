@@ -55,3 +55,6 @@ python_version = "3.12"
 strict = true
 packages = ["fraud_agent"]
 
+[[tool.mypy.overrides]]
+module = ["sklearn.*"]
+ignore_missing_imports = true

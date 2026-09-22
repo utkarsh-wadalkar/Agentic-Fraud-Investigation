@@ -1,0 +1,32 @@
+USE GRAPH FraudGraph
+
+CREATE QUERY transaction_context(STRING txn_id, DATETIME as_of) FOR GRAPH FraudGraph SYNTAX v2 {
+  Seed = {Transaction.*};
+  Result = SELECT t FROM Seed:t WHERE t.txn_id == txn_id AND t.ts <= as_of;
+  PRINT Result;
+}
+
+CREATE QUERY card_history(STRING card_id, DATETIME as_of, INT limit_n = 100) FOR GRAPH FraudGraph SYNTAX v2 {
+  Cards = {Card.*};
+  Target = SELECT c FROM Cards:c WHERE c.card_id == card_id;
+  Txns = SELECT t FROM Target:c -(MADE:e)-> Transaction:t
+         WHERE t.ts <= as_of ORDER BY t.ts DESC LIMIT limit_n;
+  PRINT Txns;
+}
+
+CREATE QUERY device_neighbors(STRING device_id, DATETIME as_of) FOR GRAPH FraudGraph SYNTAX v2 {
+  Devices = {DeviceProfile.*};
+  Target = SELECT d FROM Devices:d WHERE d.device_id == device_id;
+  Txns = SELECT t FROM Target:d <-(FROM_DEVICE:e)- Transaction:t WHERE t.ts <= as_of;
+  Cards = SELECT c FROM Txns:t <-(MADE:e)- Card:c;
+  PRINT Txns, Cards;
+}
+
+CREATE QUERY prior_cases(STRING card_id, DATETIME as_of, INT limit_n = 10) FOR GRAPH FraudGraph SYNTAX v2 {
+  Cards = {Card.*};
+  Target = SELECT c FROM Cards:c WHERE c.card_id == card_id;
+  Cases = SELECT fc FROM Target:c <-(ON_CARD:e)- FraudCase:fc
+          WHERE fc.opened_at <= as_of ORDER BY fc.opened_at DESC LIMIT limit_n;
+  PRINT Cases;
+}
+

@@ -1,0 +1,10 @@
+USE GRAPH FraudGraph
+
+CREATE LOADING JOB load_fraud_graph FOR GRAPH FraudGraph {
+  DEFINE FILENAME transactions_file;
+  DEFINE FILENAME identity_file;
+  DEFINE FILENAME closed_cases_file;
+  LOAD transactions_file TO VERTEX Transaction VALUES($"TransactionID", $"ts", $"TransactionAmt", $"ProductCD", $"channel", $"risk_score", $"addr1", false, false, "") USING HEADER="true", SEPARATOR=",";
+  LOAD closed_cases_file TO VERTEX FraudCase VALUES($"case_id", $"opened_at", "closed", $"outcome", 0.0, $"pattern", $"exposure_usd", $"analyst_notes", "history") USING HEADER="true", SEPARATOR=",";
+}
+
