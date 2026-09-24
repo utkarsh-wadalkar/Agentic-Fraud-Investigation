@@ -1,0 +1,23 @@
+CREATE VERTEX Customer(PRIMARY_ID customer_id STRING) WITH primary_id_as_attribute="true"
+CREATE VERTEX Card(PRIMARY_ID card_id STRING, network STRING, card_type STRING) WITH primary_id_as_attribute="true"
+CREATE VERTEX Transaction(PRIMARY_ID txn_id STRING, ts DATETIME, amount DOUBLE, product_cd STRING, channel STRING, risk_score DOUBLE, region STRING, device_new BOOL, proxy_present BOOL, match_status STRING) WITH primary_id_as_attribute="true"
+CREATE VERTEX DeviceProfile(PRIMARY_ID device_id STRING, label STRING, device_type STRING, os STRING, browser STRING, screen STRING) WITH primary_id_as_attribute="true"
+CREATE VERTEX EmailDomain(PRIMARY_ID domain STRING) WITH primary_id_as_attribute="true"
+CREATE VERTEX BillingRegion(PRIMARY_ID region_id STRING) WITH primary_id_as_attribute="true"
+CREATE VERTEX FraudCase(PRIMARY_ID case_id STRING, opened_at DATETIME, status STRING, verdict STRING, fraud_probability DOUBLE, pattern STRING, exposure_usd DOUBLE, summary STRING, source STRING) WITH primary_id_as_attribute="true"
+CREATE VERTEX KnowledgeChunk(PRIMARY_ID chunk_id STRING, text STRING, source STRING, source_ref STRING) WITH primary_id_as_attribute="true"
+
+CREATE DIRECTED EDGE OWNS(FROM Customer, TO Card)
+CREATE DIRECTED EDGE MADE(FROM Card, TO Transaction)
+CREATE DIRECTED EDGE FROM_DEVICE(FROM Transaction, TO DeviceProfile)
+CREATE DIRECTED EDGE PURCHASER_EMAIL(FROM Transaction, TO EmailDomain)
+CREATE DIRECTED EDGE RECIPIENT_EMAIL(FROM Transaction, TO EmailDomain)
+CREATE DIRECTED EDGE BILLED_IN(FROM Transaction, TO BillingRegion)
+CREATE DIRECTED EDGE NEXT(FROM Transaction, TO Transaction)
+CREATE DIRECTED EDGE INVOLVES(FROM FraudCase, TO Transaction)
+CREATE DIRECTED EDGE ON_CARD(FROM FraudCase, TO Card)
+CREATE DIRECTED EDGE CONNECTED_TO(FROM FraudCase, TO Card)
+CREATE DIRECTED EDGE CITES_PRIOR_CASE(FROM FraudCase, TO FraudCase)
+CREATE DIRECTED EDGE CITES_KNOWLEDGE(FROM FraudCase, TO KnowledgeChunk)
+
+CREATE GRAPH FraudGraph(*)

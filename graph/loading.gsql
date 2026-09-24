@@ -1,0 +1,33 @@
+USE GRAPH FraudGraph
+
+CREATE LOADING JOB load_fraud_graph FOR GRAPH FraudGraph {
+  DEFINE FILENAME customers_file;
+  DEFINE FILENAME cards_file;
+  DEFINE FILENAME transactions_file;
+  DEFINE FILENAME devices_file;
+  DEFINE FILENAME transaction_devices_file;
+  DEFINE FILENAME email_domains_file;
+  DEFINE FILENAME purchaser_emails_file;
+  DEFINE FILENAME recipient_emails_file;
+  DEFINE FILENAME billing_regions_file;
+  DEFINE FILENAME transaction_regions_file;
+  DEFINE FILENAME next_transactions_file;
+  DEFINE FILENAME closed_cases_file;
+  DEFINE FILENAME case_transactions_file;
+  DEFINE FILENAME case_connected_cards_file;
+
+  LOAD customers_file TO VERTEX Customer VALUES($0) USING HEADER="false", SEPARATOR=",";
+  LOAD cards_file TO VERTEX Card VALUES($0, $1, $2), TO EDGE OWNS VALUES($3, $0) USING HEADER="false", SEPARATOR=",";
+  LOAD transactions_file TO VERTEX Transaction VALUES($0, $1, $2, $3, $4, $5, $6, $7, $8, $9), TO EDGE MADE VALUES($10, $0) USING HEADER="false", SEPARATOR=",";
+  LOAD devices_file TO VERTEX DeviceProfile VALUES($0, $1, $2, $3, $4, $5) USING HEADER="false", SEPARATOR=",";
+  LOAD transaction_devices_file TO EDGE FROM_DEVICE VALUES($0, $1) USING HEADER="false", SEPARATOR=",";
+  LOAD email_domains_file TO VERTEX EmailDomain VALUES($0) USING HEADER="false", SEPARATOR=",";
+  LOAD purchaser_emails_file TO EDGE PURCHASER_EMAIL VALUES($0, $1) USING HEADER="false", SEPARATOR=",";
+  LOAD recipient_emails_file TO EDGE RECIPIENT_EMAIL VALUES($0, $1) USING HEADER="false", SEPARATOR=",";
+  LOAD billing_regions_file TO VERTEX BillingRegion VALUES($0) USING HEADER="false", SEPARATOR=",";
+  LOAD transaction_regions_file TO EDGE BILLED_IN VALUES($0, $1) USING HEADER="false", SEPARATOR=",";
+  LOAD next_transactions_file TO EDGE NEXT VALUES($0, $1) USING HEADER="false", SEPARATOR=",";
+  LOAD closed_cases_file TO VERTEX FraudCase VALUES($0, $1, $2, $3, $4, $5, $6, $7, $8), TO EDGE ON_CARD VALUES($0, $9) USING HEADER="false", SEPARATOR=",";
+  LOAD case_transactions_file TO EDGE INVOLVES VALUES($0, $1) USING HEADER="false", SEPARATOR=",";
+  LOAD case_connected_cards_file TO EDGE CONNECTED_TO VALUES($0, $1) USING HEADER="false", SEPARATOR=",";
+}
