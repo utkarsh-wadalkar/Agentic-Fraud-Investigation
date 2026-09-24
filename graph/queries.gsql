@@ -8,25 +8,29 @@ CREATE QUERY transaction_context(STRING txn_id, DATETIME as_of) FOR GRAPH FraudG
 
 CREATE QUERY card_history(STRING card_id, DATETIME as_of, INT limit_n = 100) FOR GRAPH FraudGraph SYNTAX v2 {
   Cards = {Card.*};
-  Target = SELECT c FROM Cards:c WHERE c.card_id == card_id;
-  Txns = SELECT t FROM Target:c -(MADE:e)-> Transaction:t
+  MatchingCards = SELECT c FROM Cards:c WHERE c.card_id == card_id;
+  Txns = SELECT t FROM MatchingCards:c -(MADE>)- Transaction:t
          WHERE t.ts <= as_of ORDER BY t.ts DESC LIMIT limit_n;
   PRINT Txns;
 }
 
-CREATE QUERY device_neighbors(STRING device_id, DATETIME as_of) FOR GRAPH FraudGraph SYNTAX v2 {
+CREATE QUERY device_neighbors(STRING device_id, DATETIME window_start, DATETIME as_of) FOR GRAPH FraudGraph SYNTAX v2 {
   Devices = {DeviceProfile.*};
-  Target = SELECT d FROM Devices:d WHERE d.device_id == device_id;
-  Txns = SELECT t FROM Target:d <-(FROM_DEVICE:e)- Transaction:t WHERE t.ts <= as_of;
-  Cards = SELECT c FROM Txns:t <-(MADE:e)- Card:c;
-  PRINT Txns, Cards;
+  MatchingDevices = SELECT d FROM Devices:d WHERE d.device_id == device_id;
+  Txns = SELECT t FROM MatchingDevices:d -(<FROM_DEVICE)- Transaction:t
+         WHERE t.ts >= window_start AND t.ts <= as_of;
+  FraudTxns = SELECT t FROM Txns:t -(<INVOLVES)- FraudCase:fc
+              WHERE fc.verdict == "fraud";
+  Cards = SELECT c FROM FraudTxns:t -(<MADE)- Card:c;
+  PRINT Cards AS confirmed_fraud_cards;
 }
 
 CREATE QUERY prior_cases(STRING card_id, DATETIME as_of, INT limit_n = 10) FOR GRAPH FraudGraph SYNTAX v2 {
   Cards = {Card.*};
-  Target = SELECT c FROM Cards:c WHERE c.card_id == card_id;
-  Cases = SELECT fc FROM Target:c <-(ON_CARD:e)- FraudCase:fc
+  MatchingCards = SELECT c FROM Cards:c WHERE c.card_id == card_id;
+  Cases = SELECT fc FROM MatchingCards:c -(<ON_CARD)- FraudCase:fc
           WHERE fc.opened_at <= as_of ORDER BY fc.opened_at DESC LIMIT limit_n;
   PRINT Cases;
 }
 
+INSTALL QUERY ALL

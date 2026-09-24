@@ -1,0 +1,95 @@
+{
+  "case_id": "HHG-006",
+  "case": {
+    "status": "closed_fraud",
+    "verdict": "fraud",
+    "fraud_probability": 0.88,
+    "pattern": "card_not_present_fraud",
+    "pattern_description": "",
+    "affected_txn_ids": [
+      "3476682"
+    ],
+    "first_suspicious_txn_id": "3476682",
+    "connected_card_ids": [],
+    "connected_device_profiles": [],
+    "exposure_usd": 482.12,
+    "evidence": [
+      {
+        "claim": "Flagged transaction 3476682 was $482.12, online, risk score 0.25.",
+        "source": "graph",
+        "ref": "query:transaction_context",
+        "entity_ids": [
+          "3476682"
+        ]
+      },
+      {
+        "claim": "The online transaction is materially inconsistent with the card's prior amount history.",
+        "source": "graph",
+        "ref": "detector:card_not_present_fraud",
+        "entity_ids": [
+          "3476682"
+        ]
+      },
+      {
+        "claim": "The customer reported that the flagged transaction was unauthorized.",
+        "source": "customer",
+        "ref": "trigger:customer_report",
+        "entity_ids": [
+          "C07297",
+          "C07297-K1",
+          "3476682"
+        ]
+      },
+      {
+        "claim": "Policy and prior-case guidance was retrieved through GraphRAG.",
+        "source": "document",
+        "ref": "vector:knowledge_top_5",
+        "entity_ids": []
+      }
+    ],
+    "similar_prior_cases": [],
+    "summary": "The investigation reviewed transaction 3476682, the card's as-of history, and graph-linked prior cases. The evidence supports a fraud verdict with probability 0.88 and pattern card_not_present_fraud. Policy controls produced 2 final action(s).",
+    "written_to_graph": true,
+    "graph_case_id": "HHG-006"
+  },
+  "evidence_requests": [],
+  "next_best_actions": {
+    "initial": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: unauthorized activity is confirmed or strongly suspected"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2 and R3a: preserve the investigation record"
+      }
+    ],
+    "final": [
+      {
+        "action": "BLOCK_CARD",
+        "route": "L1",
+        "reason": "R2: unauthorized activity is confirmed or strongly suspected"
+      },
+      {
+        "action": "CREATE_CASE",
+        "route": "auto",
+        "reason": "R2 and R3a: preserve the investigation record"
+      }
+    ],
+    "what_changed": "nothing"
+  },
+  "sar": {
+    "file": false,
+    "reason": "R3a: this case does not meet the suspicious activity reporting threshold.",
+    "narrative": "",
+    "subjects": [],
+    "total_amount_usd": 0.0,
+    "activity_dates": []
+  },
+  "stop_reason": "The available independent evidence supports a defensible policy action.",
+  "tool_calls": 7,
+  "tokens": 0,
+  "latency_s": 32.4176
+}

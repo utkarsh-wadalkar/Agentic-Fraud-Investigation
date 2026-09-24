@@ -86,9 +86,7 @@ def assign_card_ids(
                 labels[signature] = f"{customer_id}-K{next_number}"
                 used_numbers.add(next_number)
             for transaction_id in signature_txns[signature]:
-                result[transaction_id] = authoritative_by_txn.get(
-                    transaction_id, labels[signature]
-                )
+                result[transaction_id] = authoritative_by_txn.get(transaction_id, labels[signature])
     return result
 
 
@@ -198,12 +196,9 @@ def prepare_duckdb(source_dir: Path, database_path: Path) -> Path:
             connection.executemany(
                 "INSERT INTO authority VALUES (?, ?)", list(authoritative.items())
             )
-        signature_parts = ", ".join(
-            f"coalesce(\"{field}\", '')" for field in CARD_FIELDS
-        )
+        signature_parts = ", ".join(f"coalesce(\"{field}\", '')" for field in CARD_FIELDS)
         completeness = " + ".join(
-            f"CASE WHEN coalesce(\"{field}\", '') <> '' THEN 1 ELSE 0 END"
-            for field in CARD_FIELDS
+            f"CASE WHEN coalesce(\"{field}\", '') <> '' THEN 1 ELSE 0 END" for field in CARD_FIELDS
         )
         connection.execute(
             f"""

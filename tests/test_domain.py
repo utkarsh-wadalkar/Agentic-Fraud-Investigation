@@ -145,3 +145,36 @@ def test_settings_reads_existing_anthropic_and_tigergraph_environment(monkeypatc
     assert settings.tigergraph_ready is True
     assert settings.anthropic_ready is True
     assert settings.source_dir.name == "Drive Files"
+
+
+def test_settings_loads_documented_dotenv_file(monkeypatch, tmp_path) -> None:
+    for name in (
+        "TG_HOST",
+        "TG_GRAPHNAME",
+        "TG_API_TOKEN",
+        "ANTHROPIC_BASE_URL",
+        "ANTHROPIC_AUTH_TOKEN",
+        "ANTHROPIC_MODEL",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    (tmp_path / ".env").write_text(
+        "\n".join(
+            [
+                "TG_HOST=https://workspace.i.tgcloud.io",
+                "TG_GRAPHNAME=FraudGraph",
+                "TG_API_TOKEN=graph-secret",
+                "ANTHROPIC_BASE_URL=https://llm.example",
+                "ANTHROPIC_AUTH_TOKEN=llm-secret",
+                "ANTHROPIC_MODEL=combo",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    settings_type = importlib.import_module("fraud_agent.config").Settings
+
+    settings = settings_type()
+
+    assert settings.tigergraph_ready is True
+    assert settings.anthropic_ready is True
+    assert settings.tg_host == "https://workspace.i.tgcloud.io"

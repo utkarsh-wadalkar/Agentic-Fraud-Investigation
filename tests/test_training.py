@@ -58,3 +58,56 @@ def test_fraud_probability_model_scores_strong_signal_above_clear_signal() -> No
 
     assert 0 <= clear_probability < 0.5
     assert 0.5 < fraud_probability <= 1
+
+
+def test_tabular_model_handles_numeric_missing_and_categorical_features() -> None:
+    rows = []
+    labels = []
+    for index in range(20):
+        fraud = index >= 10
+        rows.append(
+            {
+                "TransactionID": str(index),
+                "TransactionAmt": "500" if fraud else "20",
+                "risk_score": "0.8" if fraud else "0.2",
+                "channel": "online" if fraud else "in_person",
+                "id_15": "New" if fraud else "Found",
+                "V1": "" if index % 3 == 0 else ("1" if fraud else "0"),
+            }
+        )
+        labels.append(int(fraud))
+    model = module().TabularFraudModel().fit_rows(rows, labels)
+
+    clear = model.predict_row(
+        {
+            "TransactionAmt": "18",
+            "risk_score": "0.1",
+            "channel": "in_person",
+            "id_15": "Found",
+            "V1": "0",
+        }
+    )
+    fraud = model.predict_row(
+        {
+            "TransactionAmt": "700",
+            "risk_score": "0.9",
+            "channel": "online",
+            "id_15": "New",
+            "V1": "1",
+        }
+    )
+
+    assert 0.1 < clear < 0.5 < fraud < 0.9
+
+
+def test_tabular_model_treats_nan_as_missing() -> None:
+    rows = [
+        {"amount": 10.0, "risk": 0.1},
+        {"amount": float("nan"), "risk": 0.2},
+        {"amount": 500.0, "risk": 0.8},
+        {"amount": 700.0, "risk": 0.9},
+    ]
+
+    model = module().TabularFraudModel().fit_rows(rows, [0, 0, 1, 1])
+
+    assert 0.0 <= model.predict_row({"amount": float("nan"), "risk": 0.2}) <= 1.0

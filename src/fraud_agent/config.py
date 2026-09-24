@@ -2,35 +2,35 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseModel):
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
     source_dir: Path = Field(default_factory=lambda: Path("Drive Files"))
     artifact_dir: Path = Field(default_factory=lambda: Path(".artifacts"))
     cases_dir: Path = Field(default_factory=lambda: Path("cases"))
-    tg_host: str = Field(default_factory=lambda: os.getenv("TG_HOST", ""))
-    tg_graphname: str = Field(default_factory=lambda: os.getenv("TG_GRAPHNAME", "FraudGraph"))
-    tg_api_token: SecretStr = Field(
-        default_factory=lambda: SecretStr(os.getenv("TG_API_TOKEN", ""))
-    )
-    tg_tgcloud: bool = Field(
-        default_factory=lambda: os.getenv("TG_TGCLOUD", "true").lower() == "true"
-    )
-    anthropic_base_url: str = Field(
-        default_factory=lambda: os.getenv("ANTHROPIC_BASE_URL", "")
-    )
-    anthropic_auth_token: SecretStr = Field(
-        default_factory=lambda: SecretStr(os.getenv("ANTHROPIC_AUTH_TOKEN", ""))
-    )
-    anthropic_model: str = Field(default_factory=lambda: os.getenv("ANTHROPIC_MODEL", ""))
+    tg_host: str = ""
+    tg_graphname: str = "FraudGraph"
+    tg_secret: SecretStr = SecretStr("")
+    tg_api_token: SecretStr = SecretStr("")
+    tg_tgcloud: bool = True
+    anthropic_base_url: str = ""
+    anthropic_auth_token: SecretStr = SecretStr("")
+    anthropic_model: str = ""
 
     @property
     def tigergraph_ready(self) -> bool:
-        return bool(self.tg_host and self.tg_graphname and self.tg_api_token.get_secret_value())
+        credential = self.tg_secret.get_secret_value() or self.tg_api_token.get_secret_value()
+        return bool(self.tg_host and self.tg_graphname and credential)
 
     @property
     def anthropic_ready(self) -> bool:
